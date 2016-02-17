@@ -103,3 +103,31 @@ func Find(query string, r Retriever, match chan string) {
 	}
 	close(match)
 }
+
+// The same as Find, but with a progess channel that will output ints 0-100 until it is done
+func FindProgress(query string, r Retriever, match chan string, progress chan int) {
+	db, err := checkDB()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
+	collections, _ := db.ColNames()
+	total := float64(len(collections))
+	for i, colString := range collections {
+		col, err := db.C(colString)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		col.ForEach(func(_ int, data []byte) bool {
+			if r.Match(query, string(data)) {
+				match <- fmt.Sprintf("%v/%v", colString, string(data))
+			}
+			return false
+		})
+		progress <- int(float64(i+1) / total * 100)
+
+	}
+	close(progress)
+	close(match)
+}

@@ -39,18 +39,26 @@ func TestParseFileToDB(t *testing.T) {
 	}
 }
 
-func TestFind(t *testing.T) {
+func TestFindProgress(t *testing.T) {
 	// Where the file exists
 	db, _ := checkDB()
 	makeTestCollection(db)
 	query := "MetroM2_CAN1.h"
 	received := make(chan string)
-	go Find(query, UseFilenameExact, received)
-	for found := range received {
-		fmt.Println(found)
-	}
-	// Where the file doesn't exist
+	progress := make(chan int)
+	go FindProgress(query, UseFilenameExact, received, progress)
+	go func() {
+		for found := range received {
+			fmt.Println(found)
+		}
+	}()
 
+	for prog := range progress {
+		fmt.Println(prog)
+	}
+
+	// Where the file doesn't exist
+	// todo
 	deleteTestCollection(db)
 }
 
