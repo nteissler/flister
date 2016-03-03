@@ -29,7 +29,7 @@ func TestCheckDB(t *testing.T) {
 }
 
 func TestParseFileToDB(t *testing.T) {
-	ParseFileToDB("/Users/nteissler/Documents/Sourcetree repos/SVN Finder/datatext/ABC150.svndb")
+	ParseFileToDB("./datatext/ABC150.svndb")
 	if _, err := os.Stat("./database/ABC150.filedb"); os.IsNotExist(err) {
 		t.Errorf("file not created correctly")
 	}
@@ -63,7 +63,7 @@ func TestFindProgress(t *testing.T) {
 }
 
 func makeTestCollection(db *filedb.DB) {
-	ParseFileToDB("/Users/nteissler/Documents/Sourcetree repos/SVN Finder/datatext/ABC150.svndb")
+	ParseFileToDB("./datatext/ABC150.svndb")
 }
 
 func deleteTestCollection(db *filedb.DB) {

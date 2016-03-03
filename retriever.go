@@ -1,10 +1,12 @@
 package flister
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 // the retriver interface represents ways of seeing
@@ -15,7 +17,10 @@ type Retriever interface {
 	Match(query, entry string) bool
 }
 
-type FilenameRegex struct{}
+type FilenameRegex struct {
+	re   *regexp.Regexp
+	once sync.Once
+}
 type AncestorOf struct{}
 type FilenameExact struct{}
 type FilenameContains struct{} // may remove this and just rely on Filename Regex
@@ -31,13 +36,18 @@ var UseFilenameContains FilenameContains
 // expects a well formed regular expression, so you must do your
 // own error checking for that. if regex is malformed, simply
 // returns false
-func (_ FilenameRegex) Match(query, entry string) bool {
-	regex, err := regexp.Compile(query)
+func (f *FilenameRegex) Match(query, entry string) bool {
+	var err error
+	f.once.Do(func() {
+		f.re, err = regexp.Compile(query)
+		fmt.Printf("regex match: %T: &p=%p i=%v\n", f, &f, f)
+		fmt.Println("regex compiled")
+	})
 	if err != nil {
 		log.Println("bad regex. err:", err)
 		return false
 	}
-	loc := regex.FindStringIndex(entry)
+	loc := f.re.FindStringIndex(entry)
 	if loc == nil {
 		return false
 	}
