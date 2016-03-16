@@ -1,7 +1,6 @@
 package flister
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 	"regexp"
@@ -40,8 +39,6 @@ func (f *FilenameRegex) Match(query, entry string) bool {
 	var err error
 	f.once.Do(func() {
 		f.re, err = regexp.Compile(query)
-		fmt.Printf("regex match: %T: &p=%p i=%v\n", f, &f, f)
-		fmt.Println("regex compiled")
 	})
 	if err != nil {
 		log.Println("bad regex. err:", err)
