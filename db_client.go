@@ -105,7 +105,7 @@ func Find(query string, r Retriever, match chan string) {
 }
 
 // The same as Find, but with a progess channel that will output ints 0-100 until it is done
-func FindProgress(query string, r Retriever, match chan string, progress chan int) {
+func FindProgress(query string, r Retriever, match chan []byte, progress chan int) {
 	db, err := checkDB()
 	if err != nil {
 		log.Fatalln(err)
@@ -121,7 +121,7 @@ func FindProgress(query string, r Retriever, match chan string, progress chan in
 		}
 		col.ForEach(func(_ int, data []byte) bool {
 			if r.Match(query, string(data)) {
-				match <- fmt.Sprintf("%v/%v", colString, string(data))
+				match <- []byte(fmt.Sprintf("%v/%v", colString, string(data)))
 			}
 			return false
 		})

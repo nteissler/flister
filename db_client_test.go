@@ -44,7 +44,7 @@ func TestFindProgress(t *testing.T) {
 	db, _ := checkDB()
 	makeTestCollection(db)
 	query := "MetroM2_CAN1.h"
-	received := make(chan string)
+	received := make(chan []byte)
 	progress := make(chan int)
 	go FindProgress(query, UseFilenameExact, received, progress)
 	go func() {
