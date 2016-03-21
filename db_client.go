@@ -141,10 +141,10 @@ func (c *Client) FindProgress(query string, r Retriever) {
 			log.Fatalln(err)
 		}
 		col.ForEach(func(_ int, data []byte) bool {
+			if done {
+				return true
+			}
 			if r.Match(query, string(data)) {
-				if done {
-					return true
-				}
 				c.Matches <- []byte(fmt.Sprintf("%v/%v", colString, string(data)))
 			}
 			return false
