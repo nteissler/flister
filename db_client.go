@@ -91,8 +91,12 @@ func (c *Client) Find(query string, r Retriever) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	done := false
 	defer db.Close()
-
+	go func() {
+		<-c.Done
+		done = true
+	}()
 	collections, _ := db.ColNames()
 	for _, colString := range collections {
 		col, err := db.C(colString)
@@ -101,10 +105,16 @@ func (c *Client) Find(query string, r Retriever) {
 		}
 		col.ForEach(func(_ int, data []byte) bool {
 			if r.Match(query, string(data)) {
+				if done {
+					return true
+				}
 				c.Matches <- []byte(fmt.Sprintf("%v/%v", colString, string(data)))
 			}
 			return false
 		})
+		if done {
+			break
+		}
 
 	}
 	close(c.Matches)
@@ -117,9 +127,13 @@ func (c *Client) FindProgress(query string, r Retriever) {
 		log.Fatalln(err)
 	}
 	defer db.Close()
-
+	done := false
 	collections, _ := db.ColNames()
 	total := float64(len(collections))
+	go func() {
+		<-c.Done
+		done = true
+	}()
 	for i, colString := range collections {
 		col, err := db.C(colString)
 		if err != nil {
@@ -127,13 +141,20 @@ func (c *Client) FindProgress(query string, r Retriever) {
 		}
 		col.ForEach(func(_ int, data []byte) bool {
 			if r.Match(query, string(data)) {
+				if done {
+					return true
+				}
 				c.Matches <- []byte(fmt.Sprintf("%v/%v", colString, string(data)))
 			}
 			return false
 		})
+		if done {
+			break
+		}
 		c.Progress <- int(float64(i+1) / total * 100)
 
 	}
+	c.Progress <- 100
 	close(c.Progress)
 	close(c.Matches)
 }
