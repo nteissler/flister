@@ -157,4 +157,5 @@ func (c *Client) FindProgress(query string, r Retriever) {
 	c.Progress <- 100
 	close(c.Progress)
 	close(c.Matches)
+	close(c.Done)
 }
