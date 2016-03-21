@@ -133,6 +133,7 @@ func (c *Client) FindProgress(query string, r Retriever) {
 	go func() {
 		<-c.Done
 		done = true
+		close(c.Done)
 	}()
 	for i, colString := range collections {
 		col, err := db.C(colString)
@@ -157,5 +158,4 @@ func (c *Client) FindProgress(query string, r Retriever) {
 	c.Progress <- 100
 	close(c.Progress)
 	close(c.Matches)
-	close(c.Done)
 }
