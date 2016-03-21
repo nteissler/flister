@@ -41,19 +41,22 @@ func TestParseFileToDB(t *testing.T) {
 
 func TestFindProgress(t *testing.T) {
 	// Where the file exists
+	c := &Client{
+		Matches:  make(chan []byte),
+		Progress: make(chan int),
+		Done:     make(chan struct{}),
+	}
 	db, _ := checkDB()
 	makeTestCollection(db)
 	query := "MetroM2_CAN1.h"
-	received := make(chan []byte)
-	progress := make(chan int)
-	go FindProgress(query, UseFilenameExact, received, progress)
+	go c.FindProgress(query, UseFilenameExact)
 	go func() {
-		for found := range received {
+		for found := range c.Matches {
 			fmt.Println(found)
 		}
 	}()
 
-	for prog := range progress {
+	for prog := range c.Progress {
 		fmt.Println(prog)
 	}
 

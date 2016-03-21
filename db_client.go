@@ -11,6 +11,12 @@ import (
 
 const Dbpath = "./database"
 
+type Client struct {
+	Matches  chan []byte
+	Progress chan int
+	Done     chan struct{}
+}
+
 func ParseFileToDB(filename string) {
 	var fatalErr error
 	defer func() {
@@ -80,7 +86,7 @@ func checkDB() (*filedb.DB, error) {
 // Find searches the database and adds matches to the match
 // channel as they are found so they can be reported to the
 // user asap and not as a big dump of data
-func Find(query string, r Retriever, match chan string) {
+func (c *Client) Find(query string, r Retriever) {
 	db, err := checkDB()
 	if err != nil {
 		log.Fatalln(err)
@@ -95,17 +101,17 @@ func Find(query string, r Retriever, match chan string) {
 		}
 		col.ForEach(func(_ int, data []byte) bool {
 			if r.Match(query, string(data)) {
-				match <- fmt.Sprintf("%v/%v", colString, string(data))
+				c.Matches <- []byte(fmt.Sprintf("%v/%v", colString, string(data)))
 			}
 			return false
 		})
 
 	}
-	close(match)
+	close(c.Matches)
 }
 
 // The same as Find, but with a progess channel that will output ints 0-100 until it is done
-func FindProgress(query string, r Retriever, match chan []byte, progress chan int) {
+func (c *Client) FindProgress(query string, r Retriever) {
 	db, err := checkDB()
 	if err != nil {
 		log.Fatalln(err)
@@ -121,13 +127,13 @@ func FindProgress(query string, r Retriever, match chan []byte, progress chan in
 		}
 		col.ForEach(func(_ int, data []byte) bool {
 			if r.Match(query, string(data)) {
-				match <- []byte(fmt.Sprintf("%v/%v", colString, string(data)))
+				c.Matches <- []byte(fmt.Sprintf("%v/%v", colString, string(data)))
 			}
 			return false
 		})
-		progress <- int(float64(i+1) / total * 100)
+		c.Progress <- int(float64(i+1) / total * 100)
 
 	}
-	close(progress)
-	close(match)
+	close(c.Progress)
+	close(c.Matches)
 }
